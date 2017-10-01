@@ -25,12 +25,15 @@ class SoundListener:
         #TODO: direction_function and facing?
         #TODO: noise function?
         # holds the listener's absolute sound
-        self.sound = np.zeros((0, 2)) # numpy array
+        #TODO: some way to know input type ahead of time?
+        self.sound = np.zeros((0, 2), dtype=np.int16) # numpy array
         # holds each sound the listener heard separately
         self.sounds = []
 
     def hear_sound(self, sound_object):
         # add what this listener hears of the sound object to its sound
+
+        sound_dtype = sound_object.sound.dtype
         
         # TODO: apply a distance factor to the amplitude
         # take the FFT
@@ -41,11 +44,9 @@ class SoundListener:
         distance = ((self.pos[0] - sound_object.pos[0])**2 + (self.pos[1] - sound_object.pos[1])**2)**0.5
         real_time = sound_object.start_time + (distance/speed_of_sound)
         sample_time = int(sampling_rate * real_time)
-        pad = np.zeros((sample_time, 2))
+        pad = np.zeros((sample_time, 2), dtype=sound_dtype)
         real_sound = np.append(pad, sound_object.sound, axis=0)
-        print sound_object.sound.shape
-        print real_sound.shape
-        
+
         # add the new sound into the set of sounds heard by this listener
         # TODO: with delay?
         self.sounds.append(real_sound)
@@ -53,9 +54,9 @@ class SoundListener:
         # first, make the two sounds the same length
         zeros_to_add = self.sound.shape[0] - real_sound.shape[0]
         if zeros_to_add < 0:
-            self.sound = np.append(self.sound, np.zeros((-zeros_to_add, 2)), axis=0)
+            self.sound = np.append(self.sound, np.zeros((-zeros_to_add, 2), dtype=sound_dtype), axis=0)
         elif zeros_to_add > 0:
-            real_sound = np.append(real_sound, np.zeros((zeros_to_add, 2)), axis=0)
+            real_sound = np.append(real_sound, np.zeros((zeros_to_add, 2), dtype=sound_dtype), axis=0)
         assert real_sound.size == self.sound.size
 
         self.sound += real_sound
