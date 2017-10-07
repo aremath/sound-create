@@ -23,6 +23,16 @@ class SoundObject:
         self.start_time = start_time_
         self.position_change = position_change_
 
+    def noisy(self):
+        """changes the current sound to have noise"""
+        # for now, just a gaussian distribution
+        # since the sound is a distribution on [-1, 1]
+        # using standard deviation of 0.2 to have SNR of ~10
+        noise = np.random.normal(0, 0.2, self.sound.size)
+        self.sound = self.sound + noise
+        # make sure the values stay in [-1, 1]
+        np.clip(self.sound, -1, 1)
+
 class SoundListener:
     def __init__(self, name_, pos_, direction_, gain_function_=lambda x: 1, polar_pattern_=lambda x: 1):
         self.name = name_
@@ -109,8 +119,4 @@ def hear_moving(sobject):
         new_index = index + int(shift)
         real_sound[new_index] += sample
     return real_sound
-
-#TODO: a apply noise to the sobject's sound
-def noisy(sobject):
-    pass
 
