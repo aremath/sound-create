@@ -1,18 +1,14 @@
+from constants import *
 import numpy as np
 import scipy.io.wavfile as wavfile
 import vectors
-
-# speed of sound in air in m/s
-speed_of_sound = 340.29
-# Number of samples per second in hz
-sampling_rate = 44100
 
 #note: start time in seconds, not in samples
 
 # TODO: global volume control
 # TODO: moving sound sources! - How?
 class SoundObject:
-    def __init__(self, name_, pos_, sound_file_, start_time_, loudness_=1):
+    def __init__(self, name_, pos_, sound_file_, start_time_, loudness_=1, position_change_=lambda x: (0, 0, 0)):
         self.name = name_
         self.pos = np.array(pos_)
         srate, self.sound = wavfile.read(sound_file_) # read the sound_file_
@@ -25,6 +21,7 @@ class SoundObject:
         self.sound = np.mean(self.sound, axis=1)
         assert srate == sampling_rate, srate
         self.start_time = start_time_
+        self.position_change = position_change_
 
 class SoundListener:
     def __init__(self, name_, pos_, direction_, gain_function_=lambda x: 1, polar_pattern_=lambda x: 1):
@@ -90,4 +87,30 @@ def hear_all(sobjects, slisteners):
     for slistener in slisteners:
         for sobject in sobjects:
             slistener.hear_sound(sobject)
+
+
+### scratch space
+def hear_moving(sobject):
+    sound_dtype = sound_object.sound.dtype
+    distance = np.linalg.norm(self.pos - sound_object.pos)
+    angle = vectors.angle_between(self.direction, sound_object.pos - self.pos)
+    
+    dt = 1/sampling_rate
+    # create an array to hold the samples
+    real_sound = np.zeros_like(sobject.sound)
+    for index, sample in enumerate(sobject.sound):
+        sample_time = index * dt
+        sample_distance = sobject.pos + sobject.position_change(sample_time)
+        # truly interested in the distance difference from the original location
+        sample_distance = sample_distance - distance
+        # number of samples to shift by
+        shift = (sample_distance / speed_of_sound) * sampling_rate
+        #TODO: if shift isn't an int, average the contribution?
+        new_index = index + int(shift)
+        real_sound[new_index] += sample
+    return real_sound
+
+#TODO: a apply noise to the sobject's sound
+def noisy(sobject):
+    pass
 
